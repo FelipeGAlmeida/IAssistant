@@ -133,19 +133,19 @@ a frente dos subitens (->) representa a resposta da assistente ao comando, ou ap
   - trocar animação
   - voltar animação
   
-**_"O player está pausado"_**
+- **_"O player está pausado"_**
   - Continuar música/reprodução
   - Que horas são -> **_"Agora são HH:MM"_**
 
-**_"O player foi parado com sucesso"_** -> **_"Toque para interagir"_**
+- **_"O player foi parado com sucesso"_** -> **_"Toque para interagir"_**
 
-**_"O que deseja adicionar à essa playlist?"_**
+- **_"O que deseja adicionar à essa playlist?"_**
   - Todas/Tudo -> **_"Novas músicas adicionadas"_**
   - < Nome da música > -> **_"Novas músicas adicionadas"_**
   - < Nome do artista > -> **_"Novas músicas adicionadas"_**
   - Pasta < Nome da pasta > -> **_"Novas músicas adicionadas"_**
 
-**_"Novas músicas adicionadas"_**  -> **_"< Nome da música >"_**
+- **_"Novas músicas adicionadas"_**  -> **_"< Nome da música >"_**
 
 O conjunto de comandos não está totalmente completo, podem haver variações do comando aceitas e outros
 comandos não especificados aqui. Para obter um mapa completo, verifique o código fonte.
