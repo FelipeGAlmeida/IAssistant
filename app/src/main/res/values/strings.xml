@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">IAssistant</string>
+    <string name="service_name">NotificationService</string>
+</resources>
