@@ -49,17 +49,17 @@ public class AIService {
     private ArrayList<Song> songList;
     private ArrayList<Song> song2Play;
 
-    private MainActivity activity;
-    private MusicService musicSrv;
+    private static MainActivity activity;
+    private static MusicService musicSrv;
     private Handler h;
     private Intent playIntent;
     private Thread UIThread;
 
+    public static boolean wasPlaying = false;
     private boolean musicBound = false;
-    private boolean wasPlaying = false;
     private boolean finalize = false;
     private  boolean desiring = false;
-    private String toSay;
+    private static String toSay;
     private String justSaid;
     private String listen;
     private int fundo_ctrl;
@@ -552,8 +552,10 @@ public class AIService {
     public void startMusicService(){
         if(playIntent==null){
             playIntent = new Intent(activity, MusicService.class);
-            activity.bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            activity.startService(playIntent);
+            if(!finalize) {
+                activity.bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+                activity.startService(playIntent);
+            }
         }
     }
 
@@ -636,7 +638,7 @@ public class AIService {
         }
     }
 
-    public void pauseMusic(){
+    public static void pauseMusic(){
         musicSrv.pausePlayer();
         wasPlaying = false;
         toSay = "[A]O player está pausado";
@@ -753,6 +755,7 @@ public class AIService {
     public void finalizeAI(){
         if(musicSrv!=null) {
             finalize = true;
+            activity = null;
             musicSrv.finalizePlayer();
         }
     }

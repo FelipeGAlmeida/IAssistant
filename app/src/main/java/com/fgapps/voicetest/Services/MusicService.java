@@ -3,6 +3,7 @@ package com.fgapps.voicetest.Services;
 import android.app.Service;
 import android.content.ContentUris;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.IBinder;
@@ -25,11 +26,16 @@ public class MusicService extends Service implements
 
     private MediaPlayer player; //media player
     private ArrayList<Song> songs; //song list
-    private ArrayList<Song> songs_bck; //Backuped list
+    private ArrayList<Song> songs_bck; //backuped list
     private int songPosn; //current position
     private boolean shuffle = false;
 
+    private IntentFilter intentFilter;
+    private MyReceiver myReceiver;
+
     public MusicService() {
+        intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        myReceiver = new MyReceiver();
     }
 
     public void onCreate(){
@@ -49,6 +55,7 @@ public class MusicService extends Service implements
     }
 
     public void playSong(){
+        registerReceiver(myReceiver, intentFilter);
         player.reset();
         Song playSong = null;
         if(songPosn >= songs.size()) songPosn = 0;
@@ -161,6 +168,7 @@ public class MusicService extends Service implements
     public void stop(){
         player.stop();
         player.reset();
+        unregisterReceiver(myReceiver);
     }
 
     //Player binding and callbacks functions
