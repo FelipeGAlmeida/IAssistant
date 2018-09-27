@@ -1,6 +1,7 @@
 package com.fgapps.voicetest.Activities;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -12,6 +13,8 @@ import android.speech.RecognizerIntent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -65,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -72,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
         VoiceService.init(this);
         DimmerService.init(this);
         ai = new AIService(this);
+
+        TelephonyManager telephonyManager = (TelephonyManager)
+                this.getSystemService(Context.TELEPHONY_SERVICE);
+        telephonyManager.listen(ai, PhoneStateListener.LISTEN_CALL_STATE);
 
         result_view = findViewById(R.id.result_id);
         result_view.setOnClickListener(new View.OnClickListener() {

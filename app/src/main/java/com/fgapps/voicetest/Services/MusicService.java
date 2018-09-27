@@ -103,6 +103,14 @@ public class MusicService extends Service implements
         }
     }
 
+    public void playThisSong(Song s){
+        int idx = songs.indexOf(s);
+        if(idx > -1) {
+            songPosn = idx;
+            playSong();
+        }
+    }
+
     //Player Status Functions
 
     public void setShuffle(boolean b){

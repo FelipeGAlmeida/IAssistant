@@ -10,12 +10,14 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.telephony.PhoneStateListener;
 import android.view.View;
 
 import com.fgapps.voicetest.Activities.MainActivity;
 import com.fgapps.voicetest.Model.Song;
 import com.fgapps.voicetest.R;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -27,7 +29,7 @@ import static android.os.SystemClock.sleep;
  * Created by (Engenharia) Felipe on 05/03/2018.
  */
 
-public class AIService {
+public class AIService extends PhoneStateListener {
 
     private static final int PLAY = 0;
     private static final int PAUSE = 1;
@@ -45,6 +47,7 @@ public class AIService {
     private static final int NO = 13;
     private static final int SET = 14;
     private static final int ADD = 15;
+    private static final int GOTO = 16;
 
     private ArrayList<Song> songList;
     private ArrayList<Song> song2Play;
@@ -83,10 +86,12 @@ public class AIService {
                 if (listen.contains("outra") || listen.contains("nova")) {
                     initSong(SET);
                 }
-            }else if(listen.contains("adicionar")){
+            }else if(listen.contains("adicionar")) {
                 if (listen.contains("outra") || listen.contains("nova")) {
                     initSong(ADD);
                 }
+            }else if(listen.contains("ir para") || listen.contains("pular para")){
+                ctrlSong(GOTO);
             }else if (listen.contains("pausa")||listen.contains("pause")) {
                 ctrlSong(PAUSE);
             }else if (listen.contains("para")||listen.contains("pare")||listen.contains("pará")) {
@@ -132,7 +137,12 @@ public class AIService {
                 }else if(listen.contains("pasta")) {
                     desired(FOLDER, code);
                 }else if(listen.contains("sertanejo")||listen.contains("rock")||listen.contains("eletrônica")||listen.contains("pop")) {
-                        desired(GENRE,code);
+                    desired(GENRE, code);
+                }else if(listen.contains("não") && (listen.contains("retomar") && listen.contains("reprodução")
+                            || listen.contains("obrigado"))){
+                    if(musicSrv!=null && !song2Play.isEmpty())
+                        musicSrv.go();
+                    desiring = false;
                 }else{
                     desired(CHOOSEN,code);
                 }
@@ -266,9 +276,14 @@ public class AIService {
         }else if(code == RANDOM){
             musicSrv.setShuffle(true);
             toSay = "[A]";
-        }else if(code == ALPHA){
+        }else if(code == ALPHA) {
             musicSrv.setShuffle(false);
             toSay = "[A]";
+        }else if(code == GOTO){
+            listen = listen.replace("ir para", "")
+                    .replace("pular para", "");
+            toSay = "[A]";
+            desired(CHOOSEN, GOTO);
         }
     }
 
@@ -400,41 +415,65 @@ public class AIService {
             if(listen.length()>2) {
                 String[] desired = listen.split(" ");
                 String aux = "";
-                for (int i=0;i<desired.length;i++) {
-                    if(desired[i].length()<3 && desired[i+1].length()<5 && (i+1)<desired.length) {
-                        aux = desired[i]+" "+desired[i+1];
-                        i++;
-                    }else aux = desired[i];
-                    for (Song s : songList) {
-                        if (matchTo(s.getName(),aux) || matchTo(s.getArtist(),aux) || matchTo(s.getTitle(), aux)) {
-                            if(!song2Play.contains(s))
-                                song2Play.add(s);
+//                for (int i=0;i<desired.length;i++) {
+//                    if(desired[i].length()<3 && desired[i+1].length()<5 && (i+1)<desired.length) {
+//                        aux = desired[i]+" "+desired[i+1];
+//                        i++;
+//                    }else aux = desired[i];
+//                    for (Song s : songList) {
+//                        if (matchTo(s.getName(),aux) || matchTo(s.getArtist(),aux) || matchTo(s.getTitle(), aux)) {
+//                            if(!song2Play.contains(s))
+//                                song2Play.add(s);
+//                        }
+//                    }
+//                }
+                int n_song = songList.size();
+                int n_max = desired.length;
+                int[] k = new int[n_song];
+                for(int i=0;i<n_song;i++){
+                    Song s = songList.get(i);
+                    for (String d : desired) {
+                        if (matchTo(s.getName(), d) || matchTo(s.getArtist(), d) || matchTo(s.getTitle(), d)) {
+                            k[i]++;
                         }
                     }
                 }
-                if (song2Play.size() > 0) {
-                    if(mode == ADD) {
-                        toSay = "[A]Novas músicas adicionadas";
-                        justSaid = toSay;
-                        activity.getResult_view().setText("Novas músicas adicionadas");
-                    }else{
-                        toSay = "[A]Ok, inicializando o player";
-                        justSaid = toSay;
-                        activity.getResult_view().setText("Ok, inicializando o player");
+
+
+                for (int i=0;i<k.length;i++) {
+                    if(k[i] == n_max){
+                        if (!song2Play.contains(songList.get(i)))
+                            song2Play.add(songList.get(i));
                     }
-                    h.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(mode == ADD) {
-                                musicSrv.add2List(song2Play);
-                                musicSrv.go();
-                            }else {
-                                musicSrv.setList(song2Play);
-                                musicSrv.playSong();
-                            }
-                            desiring = false;
+                }
+
+                if (song2Play.size() > 0) {
+                    if (mode == GOTO) {
+                        musicSrv.playThisSong(song2Play.get(0));
+                    }else {
+                        if (mode == ADD) {
+                            toSay = "[A]Novas músicas adicionadas";
+                            justSaid = toSay;
+                            activity.getResult_view().setText("Novas músicas adicionadas");
+                        } else {
+                            toSay = "[A]Ok, inicializando o player";
+                            justSaid = toSay;
+                            activity.getResult_view().setText("Ok, inicializando o player");
                         }
-                    }, 3000);
+                        h.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (mode == ADD) {
+                                    musicSrv.add2List(song2Play);
+                                    musicSrv.go();
+                                } else if (mode == SET) {
+                                    musicSrv.setList(song2Play);
+                                    musicSrv.playSong();
+                                }
+                                desiring = false;
+                            }
+                        }, 3000);
+                    }
                 } else {
                     toSay = "[A]Infelizmente consegui nada relacionado ao que disse, se quiser tente novamente";
                     activity.getResult_view().setText("Infelizmente consegui nada relacionado ao que disse, se quiser tente novamente");
@@ -447,6 +486,40 @@ public class AIService {
             }
         }
         DimmerService.wait_sec = MainActivity.MUSIC_DELAY;
+    }
+
+    private boolean matchTo(String source, String toMatch){
+        source = Normalizer.normalize(source, Normalizer.Form.NFD)
+                .replaceAll("[^\\p{ASCII}]", "")
+                .toLowerCase();
+        toMatch = Normalizer.normalize(toMatch, Normalizer.Form.NFD)
+                .replaceAll("[^\\p{ASCII}]", "")
+                .toLowerCase();
+
+        if(source.toLowerCase().contains(toMatch)){
+            return true;
+        }
+
+        char[] s = source.toLowerCase().toCharArray();
+        char[] m = toMatch.toCharArray();
+
+        if(s[0] != m[0]){
+            return false;
+        }
+
+        boolean flag = false;
+        int i=0, i2, equality = 0;
+        for(i2=0;i2<s.length;i2++){
+            if(i2<m.length+(m.length-equality) && flag) i++;
+            if(s[i2]==m[i]){
+                equality++;
+                flag = true;
+            }else flag = false;
+            if(i==m.length-1) break;
+        }
+
+        if(equality >= i2-2) return true;
+        else return false;
     }
 
     public void initUIThread(){
@@ -487,36 +560,6 @@ public class AIService {
             default: activity.getFundo_view().setBackgroundResource(R.drawable.back_app);
         }
         activity.saveData(fundo_ctrl);
-    }
-
-    private boolean matchTo(String source, String toMatch){
-
-        if(toMatch.length()<3) return false;
-
-        if(source.toLowerCase().contains(toMatch)){
-            return true;
-        }
-
-        char[] s = source.toLowerCase().toCharArray();
-        char[] m = toMatch.toCharArray();
-
-        if(s[0] != m[0]){
-            return false;
-        }
-
-        boolean flag = false;
-        int i=0, i2, equality = 0;
-        for(i2=0;i2<s.length;i2++){
-            if(i2<m.length+(m.length-equality) && flag) i++;
-            if(s[i2]==m[i]){
-                equality++;
-                flag = true;
-            }else flag = false;
-            if(i==m.length-1) break;
-        }
-
-        if(equality >= i2-2) return true;
-        else return false;
     }
 
     //Music service interface
@@ -758,5 +801,13 @@ public class AIService {
             activity = null;
             musicSrv.finalizePlayer();
         }
+    }
+
+    @Override
+    public void onCallStateChanged(int state, String incomingNumber) {
+        if(isPlaying() && state > 0) {
+            pause();
+        }
+        if(state == 0 && song2Play!=null) playMusic();
     }
 }
