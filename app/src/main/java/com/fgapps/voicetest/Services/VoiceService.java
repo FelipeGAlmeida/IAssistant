@@ -7,6 +7,8 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.util.Log;
 
 import com.fgapps.voicetest.Activities.MainActivity;
 
@@ -47,7 +49,23 @@ public class VoiceService {
                     listenAgain = true;
                     s = toSay.replace("[Q]","");
                 }else s = toSay.replace("[A]", "");
-                ts.speak(s, TextToSpeech.QUEUE_FLUSH, null, null);
+                ts.speak(s, TextToSpeech.QUEUE_FLUSH, null, "UTT_ID");
+                ts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String s) {
+                        Log.v(s, "COMEÇOU A FALAR");
+                    }
+
+                    @Override
+                    public void onDone(String s) {
+                        Log.v(s, "ACABOU DE FALAR");
+                    }
+
+                    @Override
+                    public void onError(String s) {
+                        Log.v(s, "ERRO AO FALAR");
+                    }
+                });
                 while(ts.isSpeaking());
                 ts.shutdown();
                 can_listen = true;

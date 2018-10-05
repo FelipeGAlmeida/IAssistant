@@ -711,6 +711,18 @@ public class AIService extends PhoneStateListener {
         }
     }
 
+    public void volDown(){
+        if(musicSrv!=null) {
+            musicSrv.volumeDown();
+        }
+    }
+
+    public void volUp(){
+        if(musicSrv!=null) {
+            musicSrv.volumeUp();
+        }
+    }
+
     public boolean isPlaying() {
         if(musicSrv!=null && musicBound) {
             return musicSrv.isPng();

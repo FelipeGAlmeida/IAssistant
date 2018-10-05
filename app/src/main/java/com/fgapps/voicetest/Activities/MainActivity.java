@@ -1,20 +1,28 @@
 package com.fgapps.voicetest.Activities;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -25,6 +33,7 @@ import android.widget.TextView;
 import com.fgapps.voicetest.R;
 import com.fgapps.voicetest.Services.AIService;
 import com.fgapps.voicetest.Services.DimmerService;
+import com.fgapps.voicetest.Services.NotificationService;
 import com.fgapps.voicetest.Services.StorageService;
 import com.fgapps.voicetest.Services.VoiceService;
 
@@ -40,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int SETTINGS_REQUEST_CODE = 2;
     private static final int READ_STORAGE_PERMISSION_REQUEST_CODE = 3;
     private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 4;
+
+    private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
+    private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
 
     public static int DEFAULT_DELAY = 35;
     public static int MUSIC_DELAY = 20;
@@ -68,6 +80,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(!isNotificationServiceEnabled()) {
+            buildNotificationServiceAlertDialog();
+        }
 
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -210,6 +226,8 @@ public class MainActivity extends AppCompatActivity {
 
         toSay = "[A]Toque para interagir";
         ai.initUIThread();
+
+        toggleNotificationListenerService();
     }
 
     public void screenTapped() {
@@ -355,6 +373,96 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void buildNotificationServiceAlertDialog(){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Notificações");
+        alertDialogBuilder.setMessage("Para que o aplicativo leia as notificações para você é " +
+                "necessário que você habilite uma configuração. Deseja habilitar agora?");
+        alertDialogBuilder.setPositiveButton("Sim",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        startActivity(new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                    }
+                });
+        alertDialogBuilder.setNegativeButton("Não",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // If you choose to not enable the notification listener
+                        // the app. will not work as expected
+                    }
+                });
+        alertDialogBuilder.create().show();
+    }
+
+    private boolean isNotificationServiceEnabled(){
+        String pkgName = getPackageName();
+        final String flat = Settings.Secure.getString(getContentResolver(),
+                ENABLED_NOTIFICATION_LISTENERS);
+        if (!TextUtils.isEmpty(flat)) {
+            final String[] names = flat.split(":");
+            for (int i = 0; i < names.length; i++) {
+                final ComponentName cn = ComponentName.unflattenFromString(names[i]);
+                if (cn != null) {
+                    if (TextUtils.equals(pkgName, cn.getPackageName())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void toggleNotificationListenerService() {
+        PackageManager pm = getPackageManager();
+        pm.setComponentEnabledSetting(new ComponentName(this, NotificationService.class),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        pm.setComponentEnabledSetting(new ComponentName(this, NotificationService.class),
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+    }
+
+    private BroadcastReceiver onNotify = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String pack = intent.getStringExtra("package");
+            String title = intent.getStringExtra("title");
+            String text = intent.getStringExtra("text");
+
+            String s = "";
+            if(pack.contains(".whatsapp")){ //Mensagem do WhatsApp
+                if(!title.equals("WhatsApp")) {
+                    s = title.replace(" @ ", " no grupo ");
+                    if(text.equals("📷 Foto")) s += " enviou uma imagem";
+                    else{
+                        s += " disse: ";
+                        s += text;
+                    }
+                }
+            }
+            if(pack.contains("android.mms")){ //Mensagem de SMS
+                s = title;
+                s += "disse: ";
+                s += text;
+            }
+
+            if (VoiceService.can_listen) {
+                VoiceService.can_listen = false;
+
+                ai.volDown();
+
+                VoiceService.init(MainActivity.this);
+                VoiceService.say(s);
+
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        ai.volUp();
+                    }
+                }, 5000);
+            }
+        }
+    };
+
     public TextView getResult_view() {
         return result_view;
     }
@@ -379,6 +487,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         screenTapped();
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(onNotify,
+                new IntentFilter("Msg"));
     }
 
     @Override

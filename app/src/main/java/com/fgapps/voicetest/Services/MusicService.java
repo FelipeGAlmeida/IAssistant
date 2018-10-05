@@ -86,6 +86,14 @@ public class MusicService extends Service implements
         playSong();
     }
 
+    public void volumeDown(){
+        player.setVolume(0.2f,0.2f);
+    }
+
+    public void volumeUp(){
+        player.setVolume(1f,1f);
+    }
+
     public void setList(ArrayList<Song> theSongs){
         songs= (ArrayList<Song>) theSongs.clone();
     }
@@ -171,6 +179,7 @@ public class MusicService extends Service implements
 
     public void go(){
         player.start();
+        volumeUp();
     }
 
     public void stop(){
@@ -213,12 +222,12 @@ public class MusicService extends Service implements
 
     @Override
     public boolean onUnbind(Intent intent){
-        player.stop();
-        player.release();
+        finalizePlayer();
         return false;
     }
 
     public void finalizePlayer(){
+        player.reset();
         player.stop();
         player.release();
     }
