@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.telephony.PhoneStateListener;
+import android.util.Log;
 import android.view.View;
 
 import com.fgapps.voicetest.Activities.MainActivity;
@@ -614,7 +615,9 @@ public class AIService extends PhoneStateListener {
                 String thisFolder = musicCursor.getString(c);
                 String path[] = thisFolder.split("/");
                 thisFolder = path[path.length-2];
-                songList.add(new Song(thisId, thisTitle, thisArtist, thisName.replace(".mp3",""), thisFolder));
+                if(!thisName.contains("AUD-") && !thisFolder.contains("WhatsApp Audio"))
+                    songList.add(new Song(thisId, thisTitle, thisArtist, thisName.replace(".mp3",""), thisFolder));
+                else Log.v("SONG_LIST", "Song "+thisName+" wasn't added!");
             }
             while (musicCursor.moveToNext());
         }
