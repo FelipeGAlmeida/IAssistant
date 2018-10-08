@@ -1,0 +1,59 @@
+Version changes:
+
+V7.3
+Correção do algoritmo de leitura de notificações do WhatsApp/SMS.
+Melhoria do algoritmo de leitura de notificações do WhatsApp/SMS.
+
+V7.2
+Correção de bugs ao encerrar a aplicação.
+
+V7.1
+Implementação de controle de tempo para TTS.
+Implementação controle de volume para leitura das notificações.
+
+V7.0
+Adicionado parcialmente leitura de notificações do WhatsApp e SMS.
+Implementação de Broadcast receivers.
+
+V6.2
+Correções no tratamento das ligações recebidas.
+
+V6.1
+Adicionado tratamento caso ligações sejam recebidas.
+
+V6.0
+Adicionado tratamento caso haja desconexão do Bluetooth/Plug P2.
+
+V5.0
+Novo algoritmo para busca da musica desejada pelo usuário.
+Novo comando de voz para ir até determinada música.
+
+V4.0
+Novo sistema de reconhecimento de voz, sem Dialog.
+
+V3.3
+Adicionado modo paisagem à tela principal e aos menus.
+
+V3.2
+Adicionado menu de configurações.
+Adicionado menu de fundos.
+Adicionado novo fundos.
+Adicionado comandos de voz para troca dos fundos.
+
+V3.1
+Implementada novas funcionalidades.
+Implementado comandos de voz das novas funcionalidades.
+Implementado funções TTS das novas funcionalidades.
+
+V2.0
+Implementada funções de reconhecimento de comandos de voz com Dialog.
+Implementada funções de TTS.
+
+V1.1
+Adicionada novas funcionalidades à tela.
+Implementadas novas funcionalidades.
+
+V1.0
+Implementadas algumas funcionalidades basicas (Player).
+Implementado o fundo animado com GIF.
+Layout de tela.
