@@ -4,9 +4,11 @@
 
 This is my first application using voice commands. It uses google voice APIs to transform voice commands
 of the user in interpretable texts in the application. Obviously the set of commands is not very large, but it is scalable.
+The organization of this software is a little messy, but please consider I was learning.
 
 ## How it works:
 - Once opened, you must grant the necessary permissions.
+- To listen to your WhatsApp/SMS messages is necessary to enable it (prompted on startup)
 - On the initial screen you can see some buttons (some of them available only during playback) and a message.
 - The message is for the user to perform the touch to be able to give the voice commands.
 - The buttons are:
@@ -33,6 +35,7 @@ of the playlist, change the animation, repeat the phrase and go to the settings.
     - Rewind songs.
     - Pause music.
     - Resume song playback.
+    - Go to a specific song.
     - Stop music.
     - Start a new playlist.
     - Add new songs to a playlist.
@@ -54,9 +57,11 @@ thus helping to save battery power.
 
 Este é meu primeiro aplicativo usando comandos de voz. Ele utiliza das APIs do google de voz para transformar os comandos de voz
 do usuário em textos interpretáveis na aplicação. Obviamente o set de comandos não é muito grande, porém é escalável.
+A organização deste software está um pouco bagunçada, mas por favor considere que eu estava aprendendo.
 
 ## Como funciona:
 - Uma vez aberto, é preciso conceder as permissões necessárias.
+- Para ouvir suas mensagens do WhatsApp/SMS é necessário habilitar isso (solicitado na inicialização).
 - Prosseguindo, na tela inicial é possivel ver alguns botões (alguns disponíveis somente durante a reprodução) e uma instrução.
 - A instrução é para que o usuário realize o toque para poder dar os comandos de voz.
 - Os botões são:
@@ -83,6 +88,7 @@ trocar a animação, repetir a frase e ir para as configurações.
     - Retroceder músicas.
     - Pausar músicas.
     - Retomar a reprodução das músicas.
+    - Ir para uma música específica.
     - Parar músicas.
     - Iniciar uma nova playlist.
     - Adicionar novas músicas em uma playlist em execução.
@@ -130,6 +136,7 @@ a frente dos subitens (->) representa a resposta da assistente ao comando, ou ap
   - Parar música -> **_"O player foi parado com sucesso"_**
   - Adicionar nova(s) música(s)/Adicionar outra(s) música(s) -> **_"O que deseja adicionar à essa playlist?"_**
   - Ouvir outras músicas -> **_"O que deseja ouvir"_**
+  - Ir/Pular para < Nome da música >
   - trocar animação
   - voltar animação
   
@@ -148,7 +155,8 @@ a frente dos subitens (->) representa a resposta da assistente ao comando, ou ap
 - **_"Novas músicas adicionadas"_**  -> **_"< Nome da música >"_**
 
 O conjunto de comandos não está totalmente completo, podem haver variações do comando aceitas e outros
-comandos não especificados aqui. Para obter um mapa completo, verifique o código fonte.
+comandos não especificados aqui. Para obter um mapa completo, verifique o código fonte e em caso de dúvidas,
+envie um e-mail para **felipegalmeida@outlook.com**.
 
 ### FGApps
   
