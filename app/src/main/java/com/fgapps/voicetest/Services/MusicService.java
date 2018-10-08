@@ -87,7 +87,7 @@ public class MusicService extends Service implements
     }
 
     public void volumeDown(){
-        player.setVolume(0.2f,0.2f);
+        player.setVolume(0.15f,0.15f);
     }
 
     public void volumeUp(){

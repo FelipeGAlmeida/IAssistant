@@ -8,6 +8,7 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.fgapps.voicetest.Activities.MainActivity;
@@ -25,7 +26,7 @@ public class VoiceService {
 
     private static final int SPEECH_REQUEST_CODE = 0;
 
-    private static MainActivity a;
+    private static MainActivity main;
     private static TextToSpeech ts;
     private static SpeechRecognizer sr;
 
@@ -33,45 +34,66 @@ public class VoiceService {
     private static String last_msg;
 
     public static void init(MainActivity activity){
-        a = activity;
+        main = activity;
         can_listen = true;
-        sr = SpeechRecognizer.createSpeechRecognizer(a);
-        sr.setRecognitionListener(new listener());
+        sr = SpeechRecognizer.createSpeechRecognizer(main);
+        sr.setRecognitionListener(new listener_sr());
     }
 
     public static void say(final String toSay){
-        ts = new TextToSpeech(a.getApplicationContext(), new TextToSpeech.OnInitListener() {
+        if(ts == null) ts = new TextToSpeech(main.getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
-                boolean listenAgain = false;
-                String s;
-                if(toSay.contains("[Q]")){
-                    listenAgain = true;
-                    s = toSay.replace("[Q]","");
-                }else s = toSay.replace("[A]", "");
-                ts.speak(s, TextToSpeech.QUEUE_FLUSH, null, "UTT_ID");
-                ts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                    @Override
-                    public void onStart(String s) {
-                        Log.v(s, "COMEÇOU A FALAR");
-                    }
-
-                    @Override
-                    public void onDone(String s) {
-                        Log.v(s, "ACABOU DE FALAR");
-                    }
-
-                    @Override
-                    public void onError(String s) {
-                        Log.v(s, "ERRO AO FALAR");
-                    }
-                });
-                while(ts.isSpeaking());
-                ts.shutdown();
-                can_listen = true;
-                if(listenAgain) listen();
+                speak_routine(toSay);
             }
         });
+        else speak_routine(toSay);
+    }
+
+    private static void speak_routine(final String toSay) {
+        boolean listenAgain = false;
+        String s;
+        if(toSay.contains("[Q]")){
+            listenAgain = true;
+            s = toSay.replace("[Q]","");
+        }else s = toSay.replace("[A]", "");
+        if(!s.isEmpty()) {
+            ts.speak(s, TextToSpeech.QUEUE_FLUSH, null, "UTT_ID");
+            ts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override
+                public void onStart(String s) {
+
+                }
+
+                @Override
+                public void onDone(String s) {
+                    Intent msgrcv = new Intent("Vsc");
+                    msgrcv.putExtra("result", "done");
+                    Log.v("VOICE_SERVICE","SPEAK SUCESS ! msg: "+toSay);
+
+                    LocalBroadcastManager.getInstance(main.getApplicationContext()).sendBroadcast(msgrcv);
+                }
+
+                @Override
+                public void onError(String s) {
+                    Intent msgrcv = new Intent("Vsc");
+                    msgrcv.putExtra("result", "error");
+                    Log.v("VOICE_SERVICE","SPEAK ERROR ! msg: "+toSay);
+
+                    LocalBroadcastManager.getInstance(main.getApplicationContext()).sendBroadcast(msgrcv);
+                }
+            });
+            while (ts.isSpeaking()) ;
+            can_listen = true;
+            if (listenAgain) listen();
+        }
+    }
+
+    public static void closeTTS(){
+        if(ts != null) {
+            ts.shutdown();
+            ts = null;
+        }
     }
 
     public static void listen(){
@@ -83,35 +105,35 @@ public class VoiceService {
         // Start the activity, the intent will be populated with the speech text
         // and will be returned in the parent class
         sr.startListening(intent);
-        last_msg = a.getResult_view().getText().toString();
-        a.getResult_view().setTextColor(Color.YELLOW);
-        a.getResult_view().setTextSize(45);
-        a.getResult_view().setText("Fale agora !");
+        last_msg = main.getResult_view().getText().toString();
+        main.getResult_view().setTextColor(Color.YELLOW);
+        main.getResult_view().setTextSize(45);
+        main.getResult_view().setText("Fale agora !");
     }
 
     public static void stopListen(){
         sr.stopListening();
     }
 
-    static class listener implements RecognitionListener
+    static class listener_sr implements RecognitionListener
     {
         public void onRmsChanged(float rmsdB) {
-            if(!a.getResult_view().getText().equals("Fale agora !")){
+            if(!main.getResult_view().getText().equals("Fale agora !")){
                 sr.stopListening();
             }
         }
         public void onError(int error)
         {
-            a.getResult_view().setTextColor(Color.RED);
-            a.resultRedirect(SPEECH_REQUEST_CODE,RESULT_CANCELED,null,last_msg);
+            main.getResult_view().setTextColor(Color.RED);
+            main.resultRedirect(SPEECH_REQUEST_CODE,RESULT_CANCELED,null,last_msg);
         }
         public void onResults(Bundle results)
         {
-            a.getResult_view().setTextColor(Color.GREEN);
+            main.getResult_view().setTextColor(Color.GREEN);
             ArrayList info = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             Intent data = new Intent();
             data.putExtra(RecognizerIntent.EXTRA_RESULTS, info);
-            a.resultRedirect(SPEECH_REQUEST_CODE,RESULT_OK,data,last_msg);
+            main.resultRedirect(SPEECH_REQUEST_CODE,RESULT_OK,data,last_msg);
         }
         public void onReadyForSpeech(Bundle params) {}
         public void onBeginningOfSpeech() {}

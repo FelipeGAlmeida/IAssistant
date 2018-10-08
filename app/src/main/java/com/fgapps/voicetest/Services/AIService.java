@@ -414,19 +414,6 @@ public class AIService extends PhoneStateListener {
         }else{
             if(listen.length()>2) {
                 String[] desired = listen.split(" ");
-                String aux = "";
-//                for (int i=0;i<desired.length;i++) {
-//                    if(desired[i].length()<3 && desired[i+1].length()<5 && (i+1)<desired.length) {
-//                        aux = desired[i]+" "+desired[i+1];
-//                        i++;
-//                    }else aux = desired[i];
-//                    for (Song s : songList) {
-//                        if (matchTo(s.getName(),aux) || matchTo(s.getArtist(),aux) || matchTo(s.getTitle(), aux)) {
-//                            if(!song2Play.contains(s))
-//                                song2Play.add(s);
-//                        }
-//                    }
-//                }
                 int n_song = songList.size();
                 int n_max = desired.length;
                 int[] k = new int[n_song];
@@ -804,14 +791,14 @@ public class AIService extends PhoneStateListener {
 
                 sleep(1000);
             }
+            activity = null;
         }
     };
 
     public void finalizeAI(){
         if(musicSrv!=null) {
             finalize = true;
-            activity = null;
-            musicSrv.finalizePlayer();
+            activity.unbindService(musicConnection);
         }
     }
 

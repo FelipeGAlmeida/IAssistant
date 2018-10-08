@@ -37,15 +37,15 @@ public class NotificationService extends NotificationListenerService {
         msgrcv.putExtra("title", title);
         msgrcv.putExtra("text", text);
 
-        if(isRelevantNotification(title, text))
+        if(isRelevantNotification(pack, title, text))
             LocalBroadcastManager.getInstance(context).sendBroadcast(msgrcv);
-
-        cancelAllNotifications();
     }
 
-    private boolean isRelevantNotification(String title, String text){
-        if(!title.equals("WhatsApp") && !title.contains("Chamada de voz") &&
-                !text.contains("Chamada de voz") && !text.contains(" novas mensagens")) return true;
+    private boolean isRelevantNotification(String pack,  String title, String text){
+        if(!title.equals("WhatsApp") && !title.contains("Chamada de voz") && //title deve ser o nome do contato
+                !title.contains("Procurando novas mensagens") &&
+                (pack.contains(".whatsapp") || pack.contains("android.mms")) && //pack deve ser whatapp ou sms
+                !text.contains("Chamada de voz") && !text.contains(" novas mensagens")) return true; //text deve conter msg válida
         return false;
     }
 

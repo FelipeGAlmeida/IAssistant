@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(!DimmerService.isDimmedMin) {
+                    if(ai.isPlaying()) ai.volDown();
                     VoiceService.init(MainActivity.this);
                     VoiceService.say(toSay);
                 }
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(!DimmerService.isDimmedMin) {
-                    if(ai.isPlaying()) ai.pauseMusic();
+                    if(ai.isPlaying()) ai.volDown();
                     else ai.playMusic();
                 }
                 screenTapped();
@@ -228,6 +229,13 @@ public class MainActivity extends AppCompatActivity {
         ai.initUIThread();
 
         toggleNotificationListenerService();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("Msg");
+        intentFilter.addAction("Vsc");
+
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(onNotify, intentFilter);
     }
 
     public void screenTapped() {
@@ -424,25 +432,26 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().equals("Msg")){
             String pack = intent.getStringExtra("package");
             String title = intent.getStringExtra("title");
             String text = intent.getStringExtra("text");
 
-            String s = "";
+            toSay = "";
             if(pack.contains(".whatsapp")){ //Mensagem do WhatsApp
                 if(!title.equals("WhatsApp")) {
-                    s = title.replace(" @ ", " no grupo ");
-                    if(text.equals("📷 Foto")) s += " enviou uma imagem";
+                    toSay = title.replace(" @ ", " no grupo ");
+                    if(text.equals("📷 Foto")) toSay += " enviou uma imagem";
                     else{
-                        s += " disse: ";
-                        s += text;
+                        toSay += " disse: ";
+                        toSay += text;
                     }
                 }
             }
             if(pack.contains("android.mms")){ //Mensagem de SMS
-                s = title;
-                s += "disse: ";
-                s += text;
+                toSay = title;
+                toSay += "disse: ";
+                toSay += text;
             }
 
             if (VoiceService.can_listen) {
@@ -451,14 +460,15 @@ public class MainActivity extends AppCompatActivity {
                 ai.volDown();
 
                 VoiceService.init(MainActivity.this);
-                VoiceService.say(s);
-
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        ai.volUp();
-                    }
-                }, 5000);
+                VoiceService.say(toSay);
+            }
+        } else if(intent.getAction().equals("Vsc")){
+                String result = intent.getStringExtra("result");
+                if(result.equals("done")){
+                    ai.volUp();
+                }else if(result.equals("error")) { //Se der erro, tente falar novamente
+                    VoiceService.say(toSay);
+                }
             }
         }
     };
@@ -487,12 +497,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         screenTapped();
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(onNotify,
-                new IntentFilter("Msg"));
     }
 
     @Override
     protected void onDestroy() {
+        VoiceService.closeTTS();
+        if(onNotify != null)
+            LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(onNotify);
         ss.saveData(ai.getFundo_ctrl());
         ai.finalizeAI();
         super.onDestroy();
