@@ -9,6 +9,7 @@ Adicionado novos comandos.
 V7.3
 Correção do algoritmo de leitura de notificações do WhatsApp/SMS.
 Melhoria do algoritmo de leitura de notificações do WhatsApp/SMS.
+Adicionado filtro para ignorar audios do WhatsApp.
 
 V7.2
 Correção de bugs ao encerrar a aplicação.
