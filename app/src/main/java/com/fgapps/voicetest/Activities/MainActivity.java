@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
@@ -58,22 +57,18 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout voice_layout;
 
-    private Button read_btn;
     private GifTextView fundo_view;
     private TextView result_view;
     private TextView voice_view;
     private ImageView playStyle;
-    private ImageView themebtn;
     private ImageView play_btn;
     private ImageView next_btn;
     private ImageView prev_btn;
-    private ImageView settingsbtn;
 
     private Handler h;
     private AIService ai;
     private StorageService ss;
 
-    private String listen;
     private String toSay;
     private int p_request = 0;
 
@@ -95,113 +90,84 @@ public class MainActivity extends AppCompatActivity {
 
         TelephonyManager telephonyManager = (TelephonyManager)
                 this.getSystemService(Context.TELEPHONY_SERVICE);
-        telephonyManager.listen(ai, PhoneStateListener.LISTEN_CALL_STATE);
+        if(telephonyManager != null)
+            telephonyManager.listen(ai, PhoneStateListener.LISTEN_CALL_STATE);
 
         result_view = findViewById(R.id.result_id);
-        result_view.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    if (VoiceService.can_listen) {
-                        VoiceService.can_listen = false;
-                        ai.setWasPlaying();
-                        while (ai.isPlaying()) {
-                            ai.pause();
-                        }
-                        VoiceService.init(MainActivity.this);
-                        VoiceService.listen();
-                    } else {
-                        VoiceService.stopListen();
+        result_view.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                if (VoiceService.can_listen) {
+                    VoiceService.can_listen = false;
+                    ai.setWasPlaying();
+                    while (ai.isPlaying()) {
+                        ai.pause();
                     }
-                }
-                screenTapped();
-            }
-        });
-        read_btn = findViewById(R.id.read_id);
-        read_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    if(ai.isPlaying()) ai.volDown();
                     VoiceService.init(MainActivity.this);
-                    VoiceService.say(toSay);
+                    VoiceService.listen();
+                } else {
+                    VoiceService.stopListen();
                 }
-                screenTapped();
             }
+            screenTapped();
+        });
+        Button read_btn = findViewById(R.id.read_id);
+        read_btn.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                if(ai.isPlaying()) ai.volDown();
+                VoiceService.init(MainActivity.this);
+                VoiceService.say(toSay);
+            }
+            screenTapped();
         });
         play_btn = findViewById(R.id.music_id);
-        play_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    if(ai.isPlaying()) ai.volDown();
-                    else ai.playMusic();
-                }
-                screenTapped();
+        play_btn.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                if(ai.isPlaying()) AIService.pauseMusic();
+                else ai.playMusic();
             }
-
+            screenTapped();
         });
         next_btn = findViewById(R.id.next_id);
-        next_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    ai.next();
-                }
-                screenTapped();
+        next_btn.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                ai.next();
             }
+            screenTapped();
         });
         prev_btn = findViewById(R.id.prev_id);
-        prev_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    ai.prev();
-                }
-                screenTapped();
+        prev_btn.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                ai.prev();
             }
+            screenTapped();
         });
         playStyle = findViewById(R.id.playStyle_id);
-        playStyle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    ai.setShuffle();
-                }
-                screenTapped();
+        playStyle.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                ai.setShuffle();
             }
+            screenTapped();
         });
-        themebtn = findViewById(R.id.theme_id);
-        themebtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    Intent intent = new Intent(MainActivity.this, SkinActivity.class);
-                    intent.putExtra(StorageService.FUNDO, ai.getFundo_ctrl());
-                    startActivityForResult(intent, THEME_REQUEST_CODE);
-                }
-                screenTapped();
+        ImageView themebtn = findViewById(R.id.theme_id);
+        themebtn.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                Intent intent = new Intent(MainActivity.this, SkinActivity.class);
+                intent.putExtra(StorageService.FUNDO, ai.getFundo_ctrl());
+                startActivityForResult(intent, THEME_REQUEST_CODE);
             }
+            screenTapped();
         });
         voice_layout = findViewById(R.id.voiceLayout_id);
         voice_view = findViewById(R.id.voicetxt_id);
         fundo_view = findViewById(R.id.gif_id1);
-        fundo_view.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        fundo_view.setOnClickListener(view -> screenTapped());
+        ImageView settingsbtn = findViewById(R.id.settings_id);
+        settingsbtn.setOnClickListener(view -> {
+            if(!DimmerService.isDimmedMin) {
+                Intent i = new Intent(MainActivity.this, ConfigActivity.class);
+                startActivityForResult(i, SETTINGS_REQUEST_CODE);
+            }
             screenTapped();
-            }
-        });
-        settingsbtn = findViewById(R.id.settings_id);
-        settingsbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!DimmerService.isDimmedMin) {
-                    Intent i = new Intent(MainActivity.this, ConfigActivity.class);
-                    startActivityForResult(i, SETTINGS_REQUEST_CODE);
-                }
-                screenTapped();
-            }
         });
 
 
@@ -209,18 +175,15 @@ public class MainActivity extends AppCompatActivity {
         ai.setFundo_ctrl(ss.loadData());
         ai.setUIImage();
 
-        h.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if(!checkPermissionForRecordAudio()){
-                    DimmerService.wait_sec = 300;
-                    toSay = "[A]Permita que a aplicação escute você. Essa permissão é indispensável para sua utilização";
-                    VoiceService.say(toSay);
-                    try {
-                        requestPermissionForRecordAudio();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+        h.postDelayed(() -> {
+            if(!checkPermissionForRecordAudio()){
+                DimmerService.wait_sec = 300;
+                toSay = "[A]Permita que a aplicação escute você. Essa permissão é indispensável para sua utilização";
+                VoiceService.say(toSay);
+                try {
+                    requestPermissionForRecordAudio();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }, 1500);
@@ -244,14 +207,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void resultRedirect(final int requestCode,final int resultCode,
                                final Intent data, final String last_msg){
-        h.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                result_view.setTextSize(30);
-                result_view.setTextColor(Color.WHITE);
-                result_view.setText(last_msg);
-                onActivityResult(requestCode, resultCode, data);
-            }
+        h.postDelayed( () ->{
+            result_view.setTextSize(30);
+            result_view.setTextColor(Color.WHITE);
+            result_view.setText(last_msg);
+            onActivityResult(requestCode, resultCode, data);
         },150);
     }
 
@@ -264,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 List<String> results = data.getStringArrayListExtra(
                         RecognizerIntent.EXTRA_RESULTS);
-                listen = results.get(0);
+                String listen = results.get(0);
                 voice_view.setText(listen);
                 voice_layout.setVisibility(View.VISIBLE);
                 toSay = ai.ai(listen);
@@ -284,8 +244,6 @@ public class MainActivity extends AppCompatActivity {
             }
             if(ai.isPlaying()) DimmerService.wait_sec = MUSIC_DELAY;
             else DimmerService.wait_sec = DEFAULT_DELAY;
-        }else if(requestCode == SETTINGS_REQUEST_CODE){
-            //Nothing to do
         }
         ss.saveData(ai.getFundo_ctrl());
         super.onActivityResult(requestCode, resultCode, data);
@@ -307,23 +265,21 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    public void requestPermissionForReadExtertalStorage() throws Exception {
+    public void requestPermissionForReadExtertalStorage() {
         try {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     READ_STORAGE_PERMISSION_REQUEST_CODE);
         } catch (Exception e) {
             e.printStackTrace();
-            throw e;
         }
     }
 
-    public void requestPermissionForRecordAudio() throws Exception {
+    public void requestPermissionForRecordAudio() {
         try {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
                     RECORD_AUDIO_PERMISSION_REQUEST_CODE);
         } catch (Exception e) {
             e.printStackTrace();
-            throw e;
         }
     }
 
@@ -351,12 +307,7 @@ public class MainActivity extends AppCompatActivity {
                 }else{
                     toSay = "[A]Permissão não concedida. Fechando aplicação";
                     VoiceService.say(toSay);
-                    h.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            finish();
-                        }
-                    },1500);
+                    h.postDelayed(this::finish,1500);
                 }
             }
         }else if(requestCode == READ_STORAGE_PERMISSION_REQUEST_CODE){
@@ -387,17 +338,11 @@ public class MainActivity extends AppCompatActivity {
         alertDialogBuilder.setMessage("Para que o aplicativo leia as notificações para você é " +
                 "necessário que você habilite uma configuração. Deseja habilitar agora?");
         alertDialogBuilder.setPositiveButton("Sim",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        startActivity(new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS));
-                    }
-                });
+                (dialog, id) -> startActivity(new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS)));
         alertDialogBuilder.setNegativeButton("Não",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // If you choose to not enable the notification listener
-                        // the app. will not work as expected
-                    }
+                (dialog, id) -> {
+                    // If you choose to not enable the notification listener
+                    // the app. will not work as expected
                 });
         alertDialogBuilder.create().show();
     }
@@ -408,8 +353,8 @@ public class MainActivity extends AppCompatActivity {
                 ENABLED_NOTIFICATION_LISTENERS);
         if (!TextUtils.isEmpty(flat)) {
             final String[] names = flat.split(":");
-            for (int i = 0; i < names.length; i++) {
-                final ComponentName cn = ComponentName.unflattenFromString(names[i]);
+            for (String name : names) {
+                final ComponentName cn = ComponentName.unflattenFromString(name);
                 if (cn != null) {
                     if (TextUtils.equals(pkgName, cn.getPackageName())) {
                         return true;
@@ -432,7 +377,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals("Msg")){
+            if(intent.getAction() != null && intent.getAction().equals("Msg")){
             String pack = intent.getStringExtra("package");
             String title = intent.getStringExtra("title");
             String text = intent.getStringExtra("text");
@@ -462,7 +407,7 @@ public class MainActivity extends AppCompatActivity {
                 VoiceService.init(MainActivity.this);
                 VoiceService.say(toSay);
             }
-        } else if(intent.getAction().equals("Vsc")){
+        } else if(intent.getAction() != null && intent.getAction().equals("Vsc")){
                 String result = intent.getStringExtra("result");
                 if(result.equals("done")){
                     ai.volUp();

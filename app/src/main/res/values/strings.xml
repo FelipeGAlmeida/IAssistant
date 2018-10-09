@@ -1,4 +1,31 @@
 <resources>
     <string name="app_name">IAssistant</string>
     <string name="service_name">NotificationService</string>
+
+    <string name="touch_to_interact">Toque para interagir</string>
+    <string name="speak_now">Fale agora !</string>
+
+    <string name="warning_player_init">Você não poderá iniciar o player sem a permissão</string>
+    <string name="grant_music_permission">Você não permitiu que o aplicativo acesse suas músicas ainda. Deseja permitir agora?</string>
+
+    <string name="no_musics_on_device">Não existem músicas no seu dispositivo</string>
+    <string name="results_not_found">Infelizmente consegui nada relacionado ao que disse, se quiser tente novamente</string>
+    <string name="results_not_found_genre">Infelizmente não consigo separar músicas destes gêneros, mas você pode falar o nome dos artistas, músicas ou pastas que deseja ouvir</string>
+    <string name="results_not_found_funk">Infelizmente não consegui separar músicas de funk, mas você pode falar o nome dos artistas, músicas ou pastas que deseja ouvir</string>
+    <string name="sorry_cant_get_command">Desculpe, não entendi o que você quis dizer. Comando não aceito</string>
+    <string name="new_musics_added">Novas músicas adicionadas</string>
+    <string name="initializing_player">Ok, inicializando o player</string>
+    <string name="resuming_player">Retomando reprodução</string>
+    <string name="permission_asked">Permissão pedida</string>
+
+    <string name="what_wanna_listen">O que deseja ouvir?</string>
+    <string name="what_wanna_add">O que deseja adicionar à essa playlist?</string>
+
+    <string name="player_paused">O player está pausado</string>
+    <string name="player_stopped">O player foi parado com sucesso</string>
+
+    <string name="current_time">Agora são %1$s%2$dh%3$s%4$d</string>
+
+    <string name="dimmer_no_music">35</string>
+    <string name="dimmer_music">20</string>
 </resources>

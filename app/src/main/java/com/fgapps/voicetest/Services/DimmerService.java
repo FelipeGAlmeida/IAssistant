@@ -1,5 +1,6 @@
 package com.fgapps.voicetest.Services;
 
+import android.annotation.SuppressLint;
 import android.view.WindowManager;
 
 import com.fgapps.voicetest.Activities.MainActivity;
@@ -10,10 +11,11 @@ import com.fgapps.voicetest.Activities.MainActivity;
 
 public class DimmerService {
 
+    @SuppressLint("StaticFieldLeak") //MainActivity needs to be static for static functions
     private static MainActivity a;
 
     public static boolean isDimmedMin;
-    public static int idle_sec;
+    static int idle_sec;
     public static int wait_sec;
 
     public static void init(MainActivity activity){
@@ -23,28 +25,22 @@ public class DimmerService {
         wait_sec = 35;
     }
 
-    public static void dimmerMin(){
+    static void dimmerMin(){
         final WindowManager.LayoutParams params = a.getWindow().getAttributes();
         params.screenBrightness = 0;
-        a.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                a.getWindow().setAttributes(params);
-                isDimmedMin = true;
-            }
+        a.runOnUiThread(() -> {
+            a.getWindow().setAttributes(params);
+            isDimmedMin = true;
         });
     }
 
     public static void dimmerBack(){
         final WindowManager.LayoutParams params = a.getWindow().getAttributes();
         params.screenBrightness = -1;
-        a.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                a.getWindow().setAttributes(params);
-                idle_sec = 0;
-                isDimmedMin = false;
-            }
+        a.runOnUiThread(() -> {
+            a.getWindow().setAttributes(params);
+            idle_sec = 0;
+            isDimmedMin = false;
         });
     }
 

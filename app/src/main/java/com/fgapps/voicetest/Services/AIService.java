@@ -1,5 +1,6 @@
 package com.fgapps.voicetest.Services;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -22,7 +23,6 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 
 import static android.os.SystemClock.sleep;
 
@@ -53,13 +53,14 @@ public class AIService extends PhoneStateListener {
     private ArrayList<Song> songList;
     private ArrayList<Song> song2Play;
 
+    @SuppressLint("StaticFieldLeak") //MainActivity needs to be static for static functions
     private static MainActivity activity;
     private static MusicService musicSrv;
     private Handler h;
     private Intent playIntent;
     private Thread UIThread;
 
-    public static boolean wasPlaying = false;
+    private static boolean wasPlaying = false;
     private boolean musicBound = false;
     private boolean finalize = false;
     private  boolean desiring = false;
@@ -81,6 +82,17 @@ public class AIService extends PhoneStateListener {
                 && !toSay.contains("retomando") && !toSay.contains("fundo") && !toSay.contains("imagem"))
             justSaid = toSay;
         toSay = "";
+
+        if(listen.contains("cancela") && listen.contains("comando")){
+            toSay = "[A]Toque para interagir";
+            activity.getResult_view().setText(activity.getResources().getString(R.string.touch_to_interact));
+            justSaid = "";
+            desiring = false;
+            if(wasPlaying() && musicSrv!= null){
+                musicSrv.stop();
+                wasPlaying = false;
+            }
+        }
 
         if(wasPlaying) {
             if (listen.contains("toca") || listen.contains("inicia") || listen.contains("ouvi")) {
@@ -139,10 +151,14 @@ public class AIService extends PhoneStateListener {
                     desired(FOLDER, code);
                 }else if(listen.contains("sertanejo")||listen.contains("rock")||listen.contains("eletrônica")||listen.contains("pop")) {
                     desired(GENRE, code);
-                }else if(listen.contains("não") && (listen.contains("retomar") && listen.contains("reprodução")
-                            || listen.contains("obrigado"))){
-                    if(musicSrv!=null && !song2Play.isEmpty())
-                        musicSrv.go();
+                }else if(listen.contains("não") && justSaid.contains("Infelizmente consegui")){
+                    if(listen.contains("retom") || listen.contains("proseg")) {
+                        if (musicSrv != null && musicSrv.getSongList().size() > 0)
+                            wasPlaying = true;
+                    }else{
+                        activity.getResult_view().setText(activity.getResources().getString(R.string.touch_to_interact));
+                    }
+                    toSay = "[A]";
                     desiring = false;
                 }else{
                     desired(CHOOSEN,code);
@@ -159,7 +175,7 @@ public class AIService extends PhoneStateListener {
                         }
                     } else {
                         toSay = "[Q]Você não permitiu que o aplicativo acesse suas músicas ainda. Deseja permitir agora?";
-                        activity.getResult_view().setText("Você não permitiu que o aplicativo acesse suas músicas ainda. Deseja permitir agora?");
+                        activity.getResult_view().setText(activity.getResources().getString(R.string.grant_music_permission));
                     }
 
                 } else if (listen.contains("horas")) {
@@ -190,16 +206,11 @@ public class AIService extends PhoneStateListener {
 
         if(!toSay.contains("[")){
             toSay = "[A]Desculpe, não entendi o que você quis dizer. Comando não aceito";
-            activity.getResult_view().setText("Desculpe, não entendi o que você quis dizer. Comando não aceito");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.sorry_cant_get_command));
         }
 
         if(wasPlaying){
-            h.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    musicSrv.go();
-                }
-            },3350);
+            h.postDelayed(() -> musicSrv.go(),3350);
         }
         return toSay;
     }
@@ -211,10 +222,10 @@ public class AIService extends PhoneStateListener {
             wasPlaying = false;
             initUIThread();
             toSay = "[Q]O que deseja ouvir?";
-            activity.getResult_view().setText("O que deseja ouvir?");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.what_wanna_listen));
         }else{
             toSay = "[Q]O que deseja adicionar à essa playlist?";
-            activity.getResult_view().setText("O que deseja adicionar à essa playlist?");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.what_wanna_add));
         }
         desiring = true;
         wasPlaying = false;
@@ -241,33 +252,28 @@ public class AIService extends PhoneStateListener {
             h_zero = "0";
         if(m<10)
             m_zero = "0";
-        activity.getResult_view().setText("Agora são "+h_zero+Integer.toString(h)+"h"+m_zero+Integer.toString(m));
+        activity.getResult_view().setText(activity.getResources().getString(R.string.current_time,h_zero,h,m_zero,m));
     }
 
     private void ctrlSong(int code){
         if(code == PLAY){
             toSay = "[A]Retomando reprodução";
             justSaid = "[A]Ok, inicializando o player";
-            activity.getResult_view().setText("Retomando reprodução");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.resuming_player));
             DimmerService.wait_sec = MainActivity.MUSIC_DELAY;
-            h.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    musicSrv.go();
-                }
-            }, 2300);
+            h.postDelayed(() -> musicSrv.go(), 2300);
         }else if(code == PAUSE){
             musicSrv.pausePlayer();
             wasPlaying = false;
             DimmerService.wait_sec = MainActivity.MUSIC_DELAY;
             toSay = "[A]O player está pausado";
-            activity.getResult_view().setText("O player está pausado");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.player_paused));
         }else if(code == STOP){
             musicSrv.stop();
             wasPlaying = false;
             DimmerService.wait_sec = MainActivity.DEFAULT_DELAY;
             toSay = "[A]O player foi parado com sucesso";
-            activity.getResult_view().setText("O player foi parado com sucesso");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.player_stopped));
         }else if(code == NEXT){
             next();
             toSay = "[A]";
@@ -295,21 +301,18 @@ public class AIService extends PhoneStateListener {
         if(code == ALL){
             toSay = "[A]Ok, inicializando o player";
             justSaid = toSay;
-            activity.getResult_view().setText("Ok, inicializando o player");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.initializing_player));
             if(songList.size()>0) {
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        song2Play = songList;
-                        musicSrv.setList(song2Play);
-                        musicSrv.playSong();
-                        desiring = false;
-                    }
+                h.postDelayed(() -> {
+                    song2Play = songList;
+                    musicSrv.setList(song2Play);
+                    musicSrv.playSong();
+                    desiring = false;
                 }, 3000);
             }else{
                 toSay = "[A]Não existem músicas no seu dispositivo";
                 justSaid = toSay;
-                activity.getResult_view().setText("Não existem músicas no seu dispositivo");
+                activity.getResult_view().setText(activity.getResources().getString(R.string.no_musics_on_device));
             }
         }else if(code == FUNK){
             for (Song s:songList) {
@@ -321,28 +324,25 @@ public class AIService extends PhoneStateListener {
                 if(mode == ADD) {
                     toSay = "[A]Novas músicas adicionadas";
                     justSaid = toSay;
-                    activity.getResult_view().setText("Novas músicas adicionadas");
+                    activity.getResult_view().setText(activity.getResources().getString(R.string.new_musics_added));
                 }else{
                     toSay = "[A]Ok, inicializando o player";
                     justSaid = toSay;
-                    activity.getResult_view().setText("Ok, inicializando o player");
+                    activity.getResult_view().setText(activity.getResources().getString(R.string.initializing_player));
                 }
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(mode == ADD) {
-                            musicSrv.add2List(song2Play);
-                            musicSrv.go();
-                        }else {
-                            musicSrv.setList(song2Play);
-                            musicSrv.playSong();
-                        }
-                        desiring = false;
+                h.postDelayed(() -> {
+                    if(mode == ADD) {
+                        musicSrv.add2List(song2Play);
+                        musicSrv.go();
+                    }else {
+                        musicSrv.setList(song2Play);
+                        musicSrv.playSong();
                     }
+                    desiring = false;
                 },3000);
             }else{
                 toSay = "[A]Infelizmente não consegui separar músicas de funk, mas você pode falar o nome dos artistas, músicas ou pastas que deseja ouvir";
-                activity.getResult_view().setText("Infelizmente não consegui separar músicas de funk, mas você pode falar o nome dos artistas, músicas ou pastas que deseja ouvir");
+                activity.getResult_view().setText(activity.getResources().getString(R.string.results_not_found_funk));
             }
         }else if(code == GENRE) {
             for(Song s : songList){
@@ -354,28 +354,25 @@ public class AIService extends PhoneStateListener {
                 if(mode == ADD) {
                     toSay = "[A]Novas músicas adicionadas";
                     justSaid = toSay;
-                    activity.getResult_view().setText("Novas músicas adicionadas");
+                    activity.getResult_view().setText(activity.getResources().getString(R.string.new_musics_added));
                 }else{
                     toSay = "[A]Ok, inicializando o player";
                     justSaid = toSay;
-                    activity.getResult_view().setText("Ok, inicializando o player");
+                    activity.getResult_view().setText(activity.getResources().getString(R.string.initializing_player));
                 }
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(mode == ADD) {
-                            musicSrv.add2List(song2Play);
-                            musicSrv.go();
-                        }else {
-                            musicSrv.setList(song2Play);
-                            musicSrv.playSong();
-                        }
-                        desiring = false;
+                h.postDelayed(() -> {
+                    if(mode == ADD) {
+                        musicSrv.add2List(song2Play);
+                        musicSrv.go();
+                    }else {
+                        musicSrv.setList(song2Play);
+                        musicSrv.playSong();
                     }
+                    desiring = false;
                 }, 3000);
             }else {
                 toSay = "[A]Infelizmente não consigo separar músicas destes gêneros, mas você pode falar o nome dos artistas, músicas ou pastas que deseja ouvir";
-                activity.getResult_view().setText("Infelizmente não consigo separar músicas destes gêneros, mas você pode falar o nome dos artistas, músicas ou pastas que deseja ouvir");
+                activity.getResult_view().setText(activity.getResources().getString(R.string.results_not_found_genre));
             }
         }else if(code == FOLDER){
             listen = listen.replace(" de", "").replace(" da","").replace(" do","");
@@ -392,24 +389,21 @@ public class AIService extends PhoneStateListener {
                 if(mode == ADD) {
                     toSay = "[A]Novas músicas adicionadas";
                     justSaid = toSay;
-                    activity.getResult_view().setText("Novas músicas adicionadas");
+                    activity.getResult_view().setText(activity.getResources().getString(R.string.new_musics_added));
                 }else{
                     toSay = "[A]Ok, inicializando o player";
                     justSaid = toSay;
-                    activity.getResult_view().setText("Ok, inicializando o player");
+                    activity.getResult_view().setText(activity.getResources().getString(R.string.initializing_player));
                 }
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(mode == ADD) {
-                            musicSrv.add2List(song2Play);
-                            musicSrv.go();
-                        }else {
-                            musicSrv.setList(song2Play);
-                            musicSrv.playSong();
-                        }
-                        desiring = false;
+                h.postDelayed(() -> {
+                    if(mode == ADD) {
+                        musicSrv.add2List(song2Play);
+                        musicSrv.go();
+                    }else {
+                        musicSrv.setList(song2Play);
+                        musicSrv.playSong();
                     }
+                    desiring = false;
                 }, 3000);
             }
         }else{
@@ -427,7 +421,6 @@ public class AIService extends PhoneStateListener {
                     }
                 }
 
-
                 for (int i=0;i<k.length;i++) {
                     if(k[i] == n_max){
                         if (!song2Play.contains(songList.get(i)))
@@ -442,29 +435,26 @@ public class AIService extends PhoneStateListener {
                         if (mode == ADD) {
                             toSay = "[A]Novas músicas adicionadas";
                             justSaid = toSay;
-                            activity.getResult_view().setText("Novas músicas adicionadas");
+                            activity.getResult_view().setText(activity.getResources().getString(R.string.new_musics_added));
                         } else {
                             toSay = "[A]Ok, inicializando o player";
                             justSaid = toSay;
-                            activity.getResult_view().setText("Ok, inicializando o player");
+                            activity.getResult_view().setText(activity.getResources().getString(R.string.initializing_player));
                         }
-                        h.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (mode == ADD) {
-                                    musicSrv.add2List(song2Play);
-                                    musicSrv.go();
-                                } else if (mode == SET) {
-                                    musicSrv.setList(song2Play);
-                                    musicSrv.playSong();
-                                }
-                                desiring = false;
+                        h.postDelayed(() -> {
+                            if (mode == ADD) {
+                                musicSrv.add2List(song2Play);
+                                musicSrv.go();
+                            } else if (mode == SET) {
+                                musicSrv.setList(song2Play);
+                                musicSrv.playSong();
                             }
+                            desiring = false;
                         }, 3000);
                     }
                 } else {
                     toSay = "[A]Infelizmente consegui nada relacionado ao que disse, se quiser tente novamente";
-                    activity.getResult_view().setText("Infelizmente consegui nada relacionado ao que disse, se quiser tente novamente");
+                    activity.getResult_view().setText(activity.getResources().getString(R.string.results_not_found));
                 }
             }
         }
@@ -506,8 +496,7 @@ public class AIService extends PhoneStateListener {
             if(i==m.length-1) break;
         }
 
-        if(equality >= i2-2) return true;
-        else return false;
+        return equality >= i2 - 2;
     }
 
     public void initUIThread(){
@@ -524,14 +513,14 @@ public class AIService extends PhoneStateListener {
         if(code == YES) {
             try {
                 toSay = "[A]Toque em 'Permitir' para dar a permissão";
-                activity.getResult_view().setText("Permissão pedida");
+                activity.getResult_view().setText(activity.getResources().getString(R.string.permission_asked));
                 activity.requestPermissionForReadExtertalStorage();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }else{
             toSay = "[A]Você não poderá iniciar o player sem a permissão";
-            activity.getResult_view().setText("Você não poderá iniciar o player sem a permissão");
+            activity.getResult_view().setText(activity.getResources().getString(R.string.warning_player_init));
         }
     }
 
@@ -567,20 +556,16 @@ public class AIService extends PhoneStateListener {
         }
     };
 
-    public void prepareMusicList(){
-        songList = new ArrayList<Song>();
-        song2Play = new ArrayList<Song>();
+    private void prepareMusicList(){
+        songList = new ArrayList<>();
+        song2Play = new ArrayList<>();
 
         getSongList();
 
-        Collections.sort(songList, new Comparator<Song>(){
-            public int compare(Song a, Song b){
-                return a.getName().compareTo(b.getName());
-            }
-        });
+        Collections.sort(songList, (a, b) -> a.getName().compareTo(b.getName()));
     }
 
-    public void startMusicService(){
+    private void startMusicService(){
         if(playIntent==null){
             playIntent = new Intent(activity, MusicService.class);
             if(!finalize) {
@@ -590,7 +575,7 @@ public class AIService extends PhoneStateListener {
         }
     }
 
-    public void getSongList() {
+    private void getSongList() {
         ContentResolver musicResolver = activity.getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
@@ -621,6 +606,8 @@ public class AIService extends PhoneStateListener {
             }
             while (musicCursor.moveToNext());
         }
+        if(musicCursor != null)
+            musicCursor.close();
     }
 
     public int getFundo_ctrl() {
@@ -652,15 +639,12 @@ public class AIService extends PhoneStateListener {
             startMusicService();
             prepareMusicList();
             song2Play = songList;
-            h.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    while (!musicBound);
-                    musicSrv.setList(song2Play);
-                    musicSrv.playSong();
-                    toSay = "[A]Novas músicas adicionadas";
-                    justSaid = toSay;
-                }
+            h.postDelayed(() -> {
+                while (!musicBound){Log.v("FGAPPS","Waiting to bind player");}
+                musicSrv.setList(song2Play);
+                musicSrv.playSong();
+                toSay = "[A]Novas músicas adicionadas";
+                justSaid = toSay;
             },500);
         }else {
             if (musicSrv != null && song2Play!=null) {
@@ -675,7 +659,7 @@ public class AIService extends PhoneStateListener {
         musicSrv.pausePlayer();
         wasPlaying = false;
         toSay = "[A]O player está pausado";
-        activity.getResult_view().setText("O player está pausado");
+        activity.getResult_view().setText(activity.getResources().getString(R.string.player_paused));
     }
 
     public void pause() {
@@ -720,66 +704,42 @@ public class AIService extends PhoneStateListener {
         return false;
     }
 
-    Runnable runnable = new Runnable() {
+    private Runnable runnable = new Runnable() {
         @Override
         public void run() {
             activity.setScreenSettings();
             while (!finalize) {
                 if (musicSrv != null) {
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (musicSrv.isPng()) {
-                                    activity.getNextBtn().setVisibility(View.VISIBLE);
-                                    activity.getPrevBtn().setVisibility(View.VISIBLE);
-                                    activity.getPlayStyle().setVisibility(View.VISIBLE);
-                                    activity.getPlay_btn().setImageResource(android.R.drawable.ic_media_pause);
-                                    String s = musicSrv.getSongName();
-                                    activity.getResult_view().setText(s);
-                                }else{
-                                    activity.getPlay_btn().setImageResource(android.R.drawable.ic_media_play);
-                                }
+                        activity.runOnUiThread(() -> {
+                            if (musicSrv.isPng()) {
+                                activity.getNextBtn().setVisibility(View.VISIBLE);
+                                activity.getPrevBtn().setVisibility(View.VISIBLE);
+                                activity.getPlayStyle().setVisibility(View.VISIBLE);
+                                activity.getPlay_btn().setImageResource(android.R.drawable.ic_media_pause);
+                                String s = musicSrv.getSongName();
+                                activity.getResult_view().setText(s);
+                            }else{
+                                activity.getPlay_btn().setImageResource(android.R.drawable.ic_media_play);
                             }
                         });
 
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(musicSrv.getShuffle()) activity.getPlayStyle().setImageResource(R.drawable.media_shuffle);
-                                else activity.getPlayStyle().setImageResource(android.R.drawable.ic_menu_sort_alphabetically);
-                            }
+                        activity.runOnUiThread(() -> {
+                            if(musicSrv.getShuffle()) activity.getPlayStyle().setImageResource(R.drawable.media_shuffle);
+                            else activity.getPlayStyle().setImageResource(android.R.drawable.ic_menu_sort_alphabetically);
                         });
                 }
                 if(activity.getResult_view().getText().equals("O player foi parado com sucesso")) {
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            activity.getNextBtn().setVisibility(View.INVISIBLE);
-                            activity.getPrevBtn().setVisibility(View.INVISIBLE);
-                            activity.getPlayStyle().setVisibility(View.INVISIBLE);
-                            activity.getPlay_btn().setImageResource(android.R.drawable.ic_media_play);
-                            h.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    activity.getResult_view().setText("Toque para interagir");
-                                }
-                            }, 3000);
-                            DimmerService.wait_sec = MainActivity.DEFAULT_DELAY;
-                        }
+                    activity.runOnUiThread(() -> {
+                        activity.getNextBtn().setVisibility(View.INVISIBLE);
+                        activity.getPrevBtn().setVisibility(View.INVISIBLE);
+                        activity.getPlayStyle().setVisibility(View.INVISIBLE);
+                        activity.getPlay_btn().setImageResource(android.R.drawable.ic_media_play);
+                        h.postDelayed(() -> activity.getResult_view().setText(activity.getResources().getString(R.string.touch_to_interact)), 3000);
+                        DimmerService.wait_sec = MainActivity.DEFAULT_DELAY;
                     });
                 }
                 if(activity.getVoice_layout().getVisibility() == View.VISIBLE){
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            h.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    activity.getVoice_layout().setVisibility(View.INVISIBLE);
-                                }
-                            }, 3500);
-                        }
-                    });
+                    activity.runOnUiThread(() -> h.postDelayed(() -> activity.getVoice_layout().setVisibility(View.INVISIBLE), 3500));
                 }
 
                 if(DimmerService.idle_sec >=DimmerService.wait_sec) {

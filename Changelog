@@ -1,4 +1,10 @@
-Version changes:
+﻿Version changes:
+
+V8.0
+Correção de pequenos bugs.
+Otimização de código.
+Implementação de funções Lambda.
+Adicionado novos comandos.
 
 V7.3
 Correção do algoritmo de leitura de notificações do WhatsApp/SMS.

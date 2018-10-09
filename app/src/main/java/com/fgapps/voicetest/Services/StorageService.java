@@ -10,7 +10,6 @@ import com.fgapps.voicetest.Activities.MainActivity;
 
 public class StorageService {
 
-    private MainActivity activity;
     private SharedPreferences sp;
 
     private static final String FILENAME = "config";
@@ -19,7 +18,6 @@ public class StorageService {
     public static final String FUNDO = "fundo_num";
 
     public StorageService(MainActivity activity) {
-        this.activity = activity;
         sp = activity.getSharedPreferences(FILENAME, 0);
     }
 
@@ -28,7 +26,7 @@ public class StorageService {
         editor.putInt(DSM, MainActivity.DEFAULT_DELAY);
         editor.putInt(DCM, MainActivity.MUSIC_DELAY);
         editor.putInt(FUNDO, nFundo);
-        editor.commit();
+        editor.apply();
     }
 
     public int loadData(){

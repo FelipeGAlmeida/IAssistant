@@ -1,5 +1,6 @@
 package com.fgapps.voicetest.Services;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.fgapps.voicetest.Activities.MainActivity;
+import com.fgapps.voicetest.R;
 
 import java.util.ArrayList;
 
@@ -21,11 +23,11 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Created by (Engenharia) Felipe on 02/03/2018.
  */
-
 public class VoiceService {
 
     private static final int SPEECH_REQUEST_CODE = 0;
 
+    @SuppressLint("StaticFieldLeak") //MainActivity needs to be static for static functions
     private static MainActivity main;
     private static TextToSpeech ts;
     private static SpeechRecognizer sr;
@@ -41,24 +43,18 @@ public class VoiceService {
     }
 
     public static void say(final String toSay){
-        if(ts == null) ts = new TextToSpeech(main.getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int i) {
-                speak_routine(toSay);
-            }
-        });
+        if(ts == null) ts = new TextToSpeech(main.getApplicationContext(), onInit -> speak_routine(toSay));
         else speak_routine(toSay);
     }
 
     private static void speak_routine(final String toSay) {
-        boolean listenAgain = false;
-        String s;
+        String s, listenAgain = "N";
         if(toSay.contains("[Q]")){
-            listenAgain = true;
+            listenAgain = "Y";
             s = toSay.replace("[Q]","");
         }else s = toSay.replace("[A]", "");
         if(!s.isEmpty()) {
-            ts.speak(s, TextToSpeech.QUEUE_FLUSH, null, "UTT_ID");
+            ts.speak(s, TextToSpeech.QUEUE_FLUSH, null, listenAgain);
             ts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override
                 public void onStart(String s) {
@@ -72,6 +68,8 @@ public class VoiceService {
                     Log.v("VOICE_SERVICE","SPEAK SUCESS ! msg: "+toSay);
 
                     LocalBroadcastManager.getInstance(main.getApplicationContext()).sendBroadcast(msgrcv);
+                    can_listen = true;
+                    if(s.equals("Y")) main.runOnUiThread(VoiceService::listen);
                 }
 
                 @Override
@@ -83,9 +81,6 @@ public class VoiceService {
                     LocalBroadcastManager.getInstance(main.getApplicationContext()).sendBroadcast(msgrcv);
                 }
             });
-            while (ts.isSpeaking()) ;
-            can_listen = true;
-            if (listenAgain) listen();
         }
     }
 
@@ -108,7 +103,7 @@ public class VoiceService {
         last_msg = main.getResult_view().getText().toString();
         main.getResult_view().setTextColor(Color.YELLOW);
         main.getResult_view().setTextSize(45);
-        main.getResult_view().setText("Fale agora !");
+        main.getResult_view().setText(main.getResources().getString(R.string.speak_now));
     }
 
     public static void stopListen(){

@@ -3,7 +3,6 @@ package com.fgapps.voicetest.Activities;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 
 import com.fgapps.voicetest.R;
@@ -13,12 +12,6 @@ import pl.droidsonroids.gif.GifTextView;
 
 public class SkinActivity extends AppCompatActivity {
 
-    private GifTextView opc1;
-    private GifTextView opc2;
-    private GifTextView opc3;
-    private GifTextView opc4;
-    private Button voltar;
-
     private int fundo;
     private int novoFundo;
 
@@ -27,63 +20,48 @@ public class SkinActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_skin);
 
-        voltar = findViewById(R.id.voltar_id);
-        voltar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent devolve = new Intent();
-                devolve.putExtra(StorageService.FUNDO, fundo);
-                setResult(RESULT_OK, devolve);
-                finish();
-            }
+        Button voltar = findViewById(R.id.voltar_id);
+        voltar.setOnClickListener(view -> {
+            Intent devolve = new Intent();
+            devolve.putExtra(StorageService.FUNDO, fundo);
+            setResult(RESULT_OK, devolve);
+            finish();
         });
-        opc1 = findViewById(R.id.gif_id1);
-        opc1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(fundo == 1){
-                    novoFundo = 2;
-                }else{
-                    novoFundo = 1;
-                }
-                choosen();
+        GifTextView opc1 = findViewById(R.id.gif_id1);
+        opc1.setOnClickListener(view -> {
+            if(fundo == 1){
+                novoFundo = 2;
+            }else{
+                novoFundo = 1;
             }
+            choosen();
         });
-        opc2 = findViewById(R.id.gif_id2);
-        opc2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(fundo == 1 || fundo == 2){
-                    novoFundo = 3;
-                }else{
-                    novoFundo = 2;
-                }
-                choosen();
+        GifTextView opc2 = findViewById(R.id.gif_id2);
+        opc2.setOnClickListener(view -> {
+            if(fundo == 1 || fundo == 2){
+                novoFundo = 3;
+            }else{
+                novoFundo = 2;
             }
+            choosen();
         });
-        opc3 = findViewById(R.id.gif_id3);
-        opc3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(fundo == 0){
-                    novoFundo = 3;
-                }else{
-                    novoFundo = 4;
-                }
-                choosen();
+        GifTextView opc3 = findViewById(R.id.gif_id3);
+        opc3.setOnClickListener(view -> {
+            if(fundo == 0){
+                novoFundo = 3;
+            }else{
+                novoFundo = 4;
             }
+            choosen();
         });
-        opc4 = findViewById(R.id.gif_id4);
-        opc4.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(fundo == 0){
-                    novoFundo = 4;
-                }else{
-                    novoFundo = 0;
-                }
-                choosen();
+        GifTextView opc4 = findViewById(R.id.gif_id4);
+        opc4.setOnClickListener(view -> {
+            if(fundo == 0){
+                novoFundo = 4;
+            }else{
+                novoFundo = 0;
             }
+            choosen();
         });
 
         Bundle bundle = getIntent().getExtras();

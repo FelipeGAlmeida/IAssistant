@@ -18,6 +18,7 @@ import android.util.Log;
 
 import com.fgapps.voicetest.Model.Song;
 
+@SuppressWarnings("unchecked") //ArrayList<>.clone returns an Object of ArrayList<>, meaningless warning supressed
 public class MusicService extends Service implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
@@ -57,7 +58,7 @@ public class MusicService extends Service implements
     public void playSong(){
         registerReceiver(myReceiver, intentFilter);
         player.reset();
-        Song playSong = null;
+        Song playSong;
         if(songPosn >= songs.size()) songPosn = 0;
         playSong = songs.get(songPosn);//get song
         long currSong = playSong.getID();//get id
@@ -95,11 +96,11 @@ public class MusicService extends Service implements
     }
 
     public void setList(ArrayList<Song> theSongs){
-        songs= (ArrayList<Song>) theSongs.clone();
+        songs= (ArrayList<Song>)theSongs.clone();
     }
 
     public void add2List(ArrayList<Song> newSong){
-        if(songs_bck == null) songs_bck = (ArrayList<Song>) songs.clone();
+        if(songs_bck == null) songs_bck = (ArrayList<Song>)songs.clone();
         songs_bck.addAll(newSong);
         songs.addAll(newSong);
         if(shuffle){
@@ -139,25 +140,31 @@ public class MusicService extends Service implements
 
     public boolean getShuffle(){return shuffle;}
 
-    public void setSong(int songIndex){
-        songPosn=songIndex;
-    }
-
-    public int getSongIndex(){
-        return songPosn;
-    }
-
     public String getSongName(){
         return songs.get(songPosn).getName();
     }
 
-    public int getPosn(){
-        return player.getCurrentPosition();
-    }
+    public ArrayList<Song> getSongList() { return songs; }
 
-    public int getDur(){
-        return player.getDuration();
-    }
+//    public void setSong(int songIndex){ //UNUSED FUNCTIONS
+//        songPosn=songIndex;
+//    }
+//
+//    public int getSongIndex(){
+//        return songPosn;
+//    }
+//
+//    public int getPosn(){
+//        return player.getCurrentPosition();
+//    }
+//
+//    public int getDur(){
+//        return player.getDuration();
+//    }
+//
+//    public void seek(int posn){
+//        player.seekTo(posn);
+//    }
 
     public boolean isPng(){
         boolean b;
@@ -173,10 +180,6 @@ public class MusicService extends Service implements
         player.pause();
     }
 
-    public void seek(int posn){
-        player.seekTo(posn);
-    }
-
     public void go(){
         player.start();
         volumeUp();
@@ -190,8 +193,8 @@ public class MusicService extends Service implements
 
     //Player binding and callbacks functions
 
-    public class MusicBinder extends Binder {
-        public MusicService getService() {
+    class MusicBinder extends Binder {
+        MusicService getService() {
             return MusicService.this;
         }
     }
